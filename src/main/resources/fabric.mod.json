@@ -1,0 +1,41 @@
+{
+	"schemaVersion": 1,
+	"id": "betterminecarts",
+	"version": "${version}",
+	"name": "Better Minecarts",
+	"description": "Testing different things in fabric",
+	"authors": [
+		"Me!"
+	],
+	"contact": {
+		"homepage": "",
+		"sources": ""
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/betterminecarts/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"bombastian.better.minecarts.BetterMinecarts"
+		],
+		"client": [
+			"bombastian.better.minecarts.BetterMinecartsClient"
+		]
+	},
+	"mixins": [
+		"betterminecarts.mixins.json",
+		{
+			"config": "betterminecarts.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.14.21",
+		"minecraft": "~1.20.1",
+		"java": ">=17",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
