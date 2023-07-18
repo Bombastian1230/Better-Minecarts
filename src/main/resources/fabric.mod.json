@@ -3,15 +3,15 @@
 	"id": "betterminecarts",
 	"version": "${version}",
 	"name": "Better Minecarts",
-	"description": "Testing different things in fabric",
+	"description": "A mod that improves minecarts",
 	"authors": [
-		"Me!"
+		"Bombastian"
 	],
 	"contact": {
 		"homepage": "",
 		"sources": ""
 	},
-	"license": "CC0-1.0",
+	"license": "LGPL-2.1",
 	"icon": "assets/betterminecarts/icon.png",
 	"environment": "*",
 	"entrypoints": {
