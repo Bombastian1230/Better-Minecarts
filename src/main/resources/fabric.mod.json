@@ -11,7 +11,7 @@
 		"homepage": "",
 		"sources": ""
 	},
-	"license": "LGPL-2.1",
+	"license": "MIT",
 	"icon": "assets/betterminecarts/icon.png",
 	"environment": "*",
 	"entrypoints": {
