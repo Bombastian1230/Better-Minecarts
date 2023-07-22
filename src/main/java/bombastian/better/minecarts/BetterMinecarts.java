@@ -6,6 +6,7 @@ import net.fabricmc.api.ModInitializer;
 
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
+import net.minecraft.resource.featuretoggle.FeatureFlags;
 import net.minecraft.resource.featuretoggle.FeatureSet;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.util.Identifier;
@@ -22,7 +23,9 @@ public class BetterMinecarts implements ModInitializer {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-	public static ScreenHandlerType<FurnaceMinecartScreenHandler> FURNACE_MINECART_SCREEN_HANDLER = new ScreenHandlerType(FurnaceMinecartScreenHandler::new, FeatureSet.empty());
+	public static ScreenHandlerType<FurnaceMinecartScreenHandler> FURNACE_MINECART_SCREEN_HANDLER = Registry.register(Registries.SCREEN_HANDLER, new Identifier("minecraft", "furnace_minecart"),
+			new ScreenHandlerType<>(FurnaceMinecartScreenHandler::new, FeatureFlags.VANILLA_FEATURES));
+
 
 	@Override
 	public void onInitialize() {
@@ -31,6 +34,5 @@ public class BetterMinecarts implements ModInitializer {
 		ModItemGroup.registerItemGroups();
 		ModItems.registerModItems();
 		ModEntitys.registerModEntitys();
-		Registry.register(Registries.SCREEN_HANDLER, new Identifier(BetterMinecarts.MOD_ID, "furnace_minecart_screen_handler"), FURNACE_MINECART_SCREEN_HANDLER);
 	}
 }
