@@ -12,7 +12,7 @@
 		"sources": "https://github.com/Bombastian1230/Better-Minecarts"
 	},
 	"license": "MIT",
-	"icon": "assets/betterminecarts/icon.png",
+	"icon": "modIcon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
