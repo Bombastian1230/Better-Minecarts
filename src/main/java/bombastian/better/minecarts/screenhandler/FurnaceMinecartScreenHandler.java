@@ -6,53 +6,64 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.screen.ArrayPropertyDelegate;
+import net.minecraft.screen.PropertyDelegate;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 
 public class FurnaceMinecartScreenHandler extends ScreenHandler {
     private final Inventory inventory;
+    private final PropertyDelegate propertyDelegate;
 
 
     //This constructor gets called on the client when the server wants it to open the screenHandler,
     //The client will call the other constructor with an empty Inventory and the screenHandler will automatically
     //sync this empty inventory with the inventory on the server.
     public FurnaceMinecartScreenHandler(int syncId, PlayerInventory playerInventory) {
-        this(syncId, playerInventory, new SimpleInventory(9));
+        this(syncId, playerInventory, new SimpleInventory(1), new ArrayPropertyDelegate(2));
     }
 
-    //This constructor gets called from the BlockEntity on the server without calling the other constructor first, the server knows the inventory of the container
-    //and can therefore directly provide it as an argument. This inventory will then be synced to the client.
-    public FurnaceMinecartScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory) {
+    public FurnaceMinecartScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory, PropertyDelegate delegate) {
         super(BetterMinecarts.FURNACE_MINECART_SCREEN_HANDLER, syncId);
-        checkSize(inventory, 9);
+        checkSize(inventory, 1);
         this.inventory = inventory;
-        //some inventories do custom logic when a player opens it.
         inventory.onOpen(playerInventory.player);
+        this.propertyDelegate = delegate;
 
-        //This will place the slot in the correct locations for a 3x3 Grid. The slots exist on both server and client!
-        //This will not render the background of the slots however, this is the Screens job
-        int m;
-        int l;
-        //Our inventory
-        for (m = 0; m < 3; ++m) {
-            for (l = 0; l < 3; ++l) {
-                this.addSlot(new Slot(inventory, l + m * 3, 62 + l * 18, 17 + m * 18));
-            }
-        }
-        //The player inventory
-        for (m = 0; m < 3; ++m) {
-            for (l = 0; l < 9; ++l) {
-                this.addSlot(new Slot(playerInventory, l + m * 9 + 9, 8 + l * 18, 84 + m * 18));
-            }
-        }
-        //The player Hotbar
-        for (m = 0; m < 9; ++m) {
-            this.addSlot(new Slot(playerInventory, m, 8 + m * 18, 142));
-        }
+        this.addSlot(new Slot(inventory, 0, 26, 53));
 
+        addPlayerInventory(playerInventory);
+        addPlayerHotbar(playerInventory);
+
+        addProperties(this.propertyDelegate);
     }
 
+    private void addPlayerInventory(PlayerInventory playerInventory) {
+        for(int i = 0; i < 3; ++i) {
+            for(int l = 0; l < 9; ++l) {
+                this.addSlot(new Slot(playerInventory, l+i*9+9, 8+l*18, 84+i*18));
+            }
+        }
+    }
 
+    private void addPlayerHotbar(PlayerInventory playerInventory) {
+        for(int i = 0; i < 9; ++i) {
+            this.addSlot(new Slot(playerInventory, i, 8+i*18, 142));
+        }
+    }
+
+    public boolean isBurning() {
+        return propertyDelegate.get(0) > 0;
+    }
+
+    public int getFuelProgress() {
+        int i = this.propertyDelegate.get(1);
+        if (i == 0) {
+            i = 200;
+        }
+
+        return this.propertyDelegate.get(0) * 13 / i;
+    }
 
     @Override
     public ItemStack quickMove(PlayerEntity player, int slot) {
@@ -63,12 +74,10 @@ public class FurnaceMinecartScreenHandler extends ScreenHandler {
     public boolean canUse(PlayerEntity player) {
         return this.inventory.canPlayerUse(player);
     }
-
-    // Shift + Player Inv Slot
     public ItemStack transferSlot(PlayerEntity player, int invSlot) {
         ItemStack newStack = ItemStack.EMPTY;
         Slot slot = this.slots.get(invSlot);
-        if (slot != null && slot.hasStack()) {
+        if (slot.hasStack()) {
             ItemStack originalStack = slot.getStack();
             newStack = originalStack.copy();
             if (invSlot < this.inventory.size()) {
