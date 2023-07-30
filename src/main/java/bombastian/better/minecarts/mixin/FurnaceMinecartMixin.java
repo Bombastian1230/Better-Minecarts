@@ -1,11 +1,13 @@
 package bombastian.better.minecarts.mixin;
 
+import bombastian.better.minecarts.BetterMinecarts;
 import bombastian.better.minecarts.interfaces.ImplementedInventory;
 import bombastian.better.minecarts.screenhandler.FurnaceMinecartScreenHandler;
 import com.google.common.collect.Maps;
 import net.minecraft.SharedConstants;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.vehicle.AbstractMinecartEntity;
@@ -29,11 +31,14 @@ import net.minecraft.util.Util;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -49,13 +54,13 @@ public abstract class FurnaceMinecartMixin extends AbstractMinecartEntity implem
 
     @Shadow protected abstract Item getItem();
 
-
+    @Final  @Shadow private static TrackedData<Boolean> LIT;
     @Shadow private int fuel;
     @Unique private DefaultedList<ItemStack> items = DefaultedList.ofSize(3, ItemStack.EMPTY);
     @Unique private World world;
-    @Unique private final FurnaceMinecartEntity furnaceMinecart = (FurnaceMinecartEntity) (Object) this;
+    @Unique private final FurnaceMinecartEntity thisFurnaceMinecart = (FurnaceMinecartEntity) (Object) this;
     @Unique
-    private SimpleInventory simpleInventory = new SimpleInventory(1);
+    private final SimpleInventory simpleInventory = new SimpleInventory(1);
 
 
     @Unique private static PropertyDelegate propertyDelegate;
@@ -129,12 +134,10 @@ public abstract class FurnaceMinecartMixin extends AbstractMinecartEntity implem
 
     @Unique
     private static void addFuel(Map<Item, Integer> fuelTimes, TagKey<Item> tag, int fuelTime) {
-        Iterator<RegistryEntry<Item>> var3 = Registries.ITEM.iterateEntries(tag).iterator();
 
-        while(var3.hasNext()) {
-            RegistryEntry<Item> registryEntry = var3.next();
-            if (!isNonFlammableWood((Item)registryEntry.value())) {
-                fuelTimes.put((Item)registryEntry.value(), fuelTime);
+        for (RegistryEntry<Item> registryEntry : Registries.ITEM.iterateEntries(tag)) {
+            if (!isNonFlammableWood((Item) registryEntry.value())) {
+                fuelTimes.put((Item) registryEntry.value(), fuelTime);
             }
         }
 
@@ -162,7 +165,7 @@ public abstract class FurnaceMinecartMixin extends AbstractMinecartEntity implem
     // Injections
     @Inject(at = {@At("HEAD")}, method = "interact", cancellable = true)
     public void interactH(PlayerEntity player, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
-        world = furnaceMinecart.getWorld();
+        world = thisFurnaceMinecart.getWorld();
 
 
         if(!world.isClient()) {
@@ -174,25 +177,37 @@ public abstract class FurnaceMinecartMixin extends AbstractMinecartEntity implem
         cir.setReturnValue(ActionResult.success(world.isClient()));
     }
 
-    @Inject(at = {@At("HEAD")}, method = "tick")
-    public void tickT(CallbackInfo ci) {
-        Item fuelItem;
+    @Redirect(method = "tick", at = @At(value = "HEAD"))
+    private void customTick() {
+        if (false) {
+            thisFurnaceMinecart.tick(); // Call the original tick method
+        }
 
-        if() {
+        ItemStack fuelItems = simpleInventory.getStack(0);
 
+        if(!fuelItems.isEmpty()) {
+            if (isValidFuel(fuelItems)) {
+                BetterMinecarts.LOGGER.info("Valid", thisFurnaceMinecart);
+            } else {
+                BetterMinecarts.LOGGER.info("Not Valid", thisFurnaceMinecart);
+            }
+        }
+
+
+        if (!this.getWorld().isClient()) {
+            if (this.fuel > 0) {
+                --this.fuel;
+            }
+
+            if (this.fuel <= 0) {
+                thisFurnaceMinecart.pushX = 0.0;
+                thisFurnaceMinecart.pushZ = 0.0;
+            }
+
+            setLit(this.fuel > 0);
         }
     }
 
-    @Unique
-    private boolean isFuelItem(ItemStack stack) {
-        return createFuelTimeMap().containsKey(stack.getItem());
-    }
-
-    @Unique
-    private boolean isValidFuel(ItemStack stack) {
-        ItemStack itemStack = (ItemStack)this.simpleInventory.getStack(0);
-        return isFuelItem(stack) || stack.isOf(Items.BUCKET) && !itemStack.isOf(Items.BUCKET);
-    }
 
     @Inject(at ={@At("TAIL")}, method = "<clinit>")
     private static void constructorT(CallbackInfo ci) {
@@ -216,6 +231,23 @@ public abstract class FurnaceMinecartMixin extends AbstractMinecartEntity implem
                 return 2;
             }
         };
+    }
+
+    // Fuel
+    @Unique
+    protected void setLit(boolean lit) {
+        this.dataTracker.set(LIT, lit);
+    }
+
+    @Unique
+    private boolean isFuelItem(ItemStack stack) {
+        return createFuelTimeMap().containsKey(stack.getItem());
+    }
+
+    @Unique
+    private boolean isValidFuel(ItemStack stack) {
+        ItemStack itemStack = this.simpleInventory.getStack(0);
+        return isFuelItem(stack) || stack.isOf(Items.BUCKET) && !itemStack.isOf(Items.BUCKET);
     }
 
     // GUI
@@ -256,4 +288,6 @@ public abstract class FurnaceMinecartMixin extends AbstractMinecartEntity implem
         nbt.putInt("furnace_minecart.progress", fuelM);
         return nbt;
     }
+
+    // Extra
 }
