@@ -1,4 +1,4 @@
-<p align="center"><img src="https://github.com/Bombastian1230/Better-Minecarts/blob/main/.github/ReadMeicon.gif" alt="Logo" width="400"></p>
+<p align="center"><img src="https://github.com/Bombastian1230/Better-Minecarts/blob/main/.github/ReadMeicon.gif" alt="Logo" width="150"></p>
 
 <h1 align="center">Better Minecarts  <br>
 	<a href="https://www.github.com/Bombastian1230/Better-Minecarts/issues"><img src="https://img.shields.io/github/issues/bombastian1230/Better-Minecarts?logo=github&logoColor=%23ffffff&color=%23de0d29" alt="Issues"></a>
